@@ -1,0 +1,113 @@
+---
+title: "Bread dough experiment analysis"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+require(daewr)
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Building and analyzing Completely Random Design (CRD) linear model with bread dough experiment
+
+1. Gather some R packages 
+
+```{r package}
+## R package from the book
+require(daewr)
+## gmodels package that returns estimable contrasts
+require(gmodels)
+## nice visualization and summary tools for models, optional
+require(jtools)
+
+
+```
+
+2. Check out the `bread` dataset. Note: only print the whole dataset in your write-up when you know the dataset is small, otherwise, something like `print(head(<your data>))` is more visually friendly.
+
+```{r data}
+## 
+print(bread)
+
+```
+
+3. Build model using the R function `lm()`: treatment = time to rise, response variable = height of dough. Use `?lm` in R console to learn more about the function.
+```{r model}
+
+mod0 <- lm(height ~ time, data = bread)
+
+## take a look at summary stats to see effects estimates
+summary( mod0 )
+
+## you can also use the summ function from jtools for a more neat representation of the result
+
+#summ( mod0 )
+```
+
+
+4. *Parameter estimation* : comparing the LS method with the result from `lm()`
+
+Let's start by creating the necessary matrices
+```{r verify_est}
+# y = response variable
+y <- bread$height
+# X = design matrix
+X <- matrix(nrow = 12,ncol = 3)
+X[,1] <- rep(1,12)
+X[,2] <- c(rep(0,4),rep(1,4),rep(0,4))
+X[,3] <- c(rep(0,8),rep(1,4))
+
+XtX <- t(X)%*%X
+
+XtX.inv <- solve(XtX)
+
+beta.hat <- XtX.inv%*%t(X)%*%y
+
+print(beta.hat)
+
+print(coef(mod0))
+```
+
+5. Just to verify - if we include the vector of ones as noted in the textbook to create a 12 x 4 design matrix, $X$, instead, what would happen to the $(X'X)^{-1}$ ?
+
+```{r check_matrix}
+# Z = alternative design matrix
+Z <- matrix(nrow = 12,ncol = 4)
+Z[,1] <- rep(1,12)
+Z[,2] <- c(rep(1,4),rep(0,8))
+Z[,3] <- c(rep(0,4),rep(1,4),rep(0,4))
+Z[,4] <- c(rep(0,8),rep(1,4))
+
+ZtZ <- t(Z)%*%Z
+
+```
+
+6. Alternatively, we can estimate the contrasts between effects $\tau_i$
+
+```{r contrasts}
+
+t1.t2<-fit.contrast(model = mod0, 'time', c(1,-1,0))
+t1.t3<-fit.contrast(model = mod0, 'time', c(1,0,-1))
+```
+
+
+7. *Hypothesis testing* , we now want to test the hypothesis $H_0 : \mu_1 = \mu_2 = \cdots = \mu_t$ vs the alternative, which is unequal effect for any pair. F test looks at the ratio of variation from two different sources. In our case, we are interested in treatment variation vs model variation. In R, we can use `lm()` to do ANOVA, but `aov` is a simple way that is sometimes preferred. 
+
+```{r hyp_test}
+mod1 <- aov(height~time, data = bread)
+print(summary(mod1))
+```
+
+In the F-test above, assuming a significance level $\alpha = 0.5$, we should reject $H_0.$
+
+
+8. *Model assumption check* - how valid are the results of our analysis so far? One way to find out is the verify that the model assumptions are met, which we can show in R using the following commands:
+
+```{r model_assumptions}
+# generate 2 by 2 canvas for plots
+par( mfrow = c(2,2))
+plot(mod0, which = 5)
+plot(mod0, which = 1)
+plot(mod0, which = 2)
+plot(residuals(mod0)~loaf, main = 'Residuals vs Exp. Unit', data = bread)
+```
