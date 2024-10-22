@@ -48,20 +48,24 @@ d1 <- FrF2(nruns = 32, nfactors = 7,
 d2 <- FrF2(nruns = 32, nfactors = 7, 
            generators = c('ABC','ADE'),randomize = FALSE)
 
-## check for clear effects
-
-y<-1:16
 d3 <-FrF2(nruns = 16, nfactors = 6, 
           generators = c('ABC','ABD'),randomize = FALSE)
-aliases(lm(y~(.)^4, data = d3))
 
 d4 <-FrF2(nruns = 16, nfactors = 6, 
           generators = c('AB','ACD'),randomize = FALSE)
 
+
+## check for clear effects
+
+y<-1:16
+
+aliases(lm(y~(.)^4, data = d3))
+
 aliases(lm(y~(.)^4, data = d4))
 
 
-### creating designs with min. aberrations
+### creating designs with max. clear effect for 2-factor terms
+## over min. aberrations
 
 ## 2^{8-4} design
 des1 <- FrF2( nruns = 16,  nfactors = 8 , 
