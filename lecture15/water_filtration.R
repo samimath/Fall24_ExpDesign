@@ -29,3 +29,24 @@ aliases(lm(y~(.)^2, data = arso2[,-4]))
 ## visual analysis of the effect (remove the 'fold' column for effect estimation):
 arso_fit <- lm(y ~ (.)^2,data = arso2[,-4])
 halfnorm(effects = effects(arso_fit)[-1],alpha = .15)
+
+model_matrix_full<-data.frame(model.matrix(arso_fit))
+
+## e.g. design 1: % removal is assumed to be most explained by A,B,F,AD:
+X1<-cbind(model_matrix_full$X.Intercept,# overall effect
+          model_matrix_full$A1,# factor A
+          model_matrix_full$B1,# factor B
+          model_matrix_full$F1, # factor F 
+          model_matrix_full$A1.D1) # factor AD) 
+
+y_hat1 <- X1%*%as.matrix(coef(arso_fit)[c(1,2,3,4,11)])
+
+
+## now if we include both AD and CF (which are confounded in the design matrix),
+## we will get singularity
+X2<-cbind(model_matrix_full$X.Intercept,# overall effect
+          model_matrix_full$A1,# factor A
+          model_matrix_full$B1,# factor B
+          model_matrix_full$F1, # factor F 
+          model_matrix_full$A1.D1,
+          model_matrix_full$C1.F1) # factor AD) 
